@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sharp.Tui.Core\Sharp.Tui.Core.csproj" />
+    <ProjectReference Include="..\Sharp.Tui.Layout\Sharp.Tui.Layout.csproj" />
+    <ProjectReference Include="..\Sharp.Tui.Widgets\Sharp.Tui.Widgets.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
