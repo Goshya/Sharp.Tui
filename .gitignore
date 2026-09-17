@@ -1,0 +1,9 @@
+## .NET / Visual Studio / Rider standard ignores
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+*.DotSettings.user
+artifacts/
