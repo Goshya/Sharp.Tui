@@ -17,7 +17,18 @@ public sealed class Buffer
         Array.Fill(_cells, Cell.Blank);
     }
 
-    public ref Cell this[int x, int y] => ref _cells[y * Width + x];
+    public ref Cell this[int x, int y]
+    {
+        get
+        {
+            if ((uint)x >= (uint)Width)
+                throw new ArgumentOutOfRangeException(nameof(x), x, $"x must be in [0, {Width}).");
+            if ((uint)y >= (uint)Height)
+                throw new ArgumentOutOfRangeException(nameof(y), y, $"y must be in [0, {Height}).");
+
+            return ref _cells[y * Width + x];
+        }
+    }
 
     public void Clear() => Array.Fill(_cells, Cell.Blank);
 }
