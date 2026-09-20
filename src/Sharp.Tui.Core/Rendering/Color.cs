@@ -9,6 +9,11 @@ public readonly struct Color : IEquatable<Color>
     public ColorKind Kind { get; }
     private readonly byte _r, _g, _b;
 
+    internal byte Index => _r;
+    internal byte R => _r;
+    internal byte G => _g;
+    internal byte B => _b;
+
     public static readonly Color Default = default;
 
     public static Color Named(byte index0To15) => new(ColorKind.Named16, index0To15, 0, 0);

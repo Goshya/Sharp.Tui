@@ -19,6 +19,47 @@ public class ColorTests
         Assert.Equal(ColorKind.Rgb, Color.Rgb(1, 2, 3).Kind);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(7)]
+    [InlineData(15)]
+    public void Index_OfNamedColor_ReturnsTheNamedIndex(byte index)
+    {
+        Assert.Equal(index, Color.Named(index).Index);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(16)]
+    [InlineData(196)]
+    [InlineData(255)]
+    public void Index_OfIndexedColor_ReturnsTheIndex(byte index)
+    {
+        Assert.Equal(index, Color.Indexed(index).Index);
+    }
+
+    [Theory]
+    [InlineData(0, 0, 0)]
+    [InlineData(1, 2, 3)]
+    [InlineData(255, 128, 7)]
+    public void RgbComponents_OfRgbColor_ReturnTheGivenChannels(byte r, byte g, byte b)
+    {
+        var color = Color.Rgb(r, g, b);
+
+        Assert.Equal(r, color.R);
+        Assert.Equal(g, color.G);
+        Assert.Equal(b, color.B);
+    }
+
+    [Fact]
+    public void Accessors_OfDefaultColor_AreZero()
+    {
+        Assert.Equal(0, Color.Default.Index);
+        Assert.Equal(0, Color.Default.R);
+        Assert.Equal(0, Color.Default.G);
+        Assert.Equal(0, Color.Default.B);
+    }
+
     [Fact]
     public void Equals_SameKindAndValues_IsTrue()
     {
