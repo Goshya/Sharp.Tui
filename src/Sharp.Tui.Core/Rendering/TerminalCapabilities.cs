@@ -29,8 +29,19 @@ public readonly record struct TerminalCapabilities(ColorSupport ColorSupport)
         if (term.Contains("256color", StringComparison.OrdinalIgnoreCase))
             return ColorSupport.Indexed256;
 
-        if (term is "" or "dumb")
+        // An explicit "dumb" is a real signal (e.g. Emacs' shell-mode sets it) — honor it on any OS.
+        if (term is "dumb")
             return ColorSupport.NoColor;
+
+        if (term is "")
+        {
+            // TERM is a Unix convention; Windows consoles (cmd.exe, and PowerShell 7 launched
+            // outside Windows Terminal) never set it, WT_SESSION, or COLORTERM either, yet still
+            // render basic ANSI color once VT processing is on. Treating "no signal" as NoColor
+            // there would silently degrade the project's own stated baseline (Windows Terminal +
+            // PowerShell 7) whenever it isn't nested inside Windows Terminal specifically.
+            return OperatingSystem.IsWindows() ? ColorSupport.Named16 : ColorSupport.NoColor;
+        }
 
         return ColorSupport.Named16;
     }

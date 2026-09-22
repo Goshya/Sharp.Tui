@@ -8,13 +8,18 @@ public class TerminalCapabilitiesTests
         TerminalCapabilities.Detect(key => env.GetValueOrDefault(key), isOutputRedirected);
 
     [Fact]
-    public void NoEnvironmentInfoAtAll_IsConservativeAndReportsNoColor()
+    public void NoEnvironmentInfoAtAll_FallsBackToPlatformDefault()
     {
-        // Absent TERM (no signal at all) is treated the same as TERM=dumb — a deliberately
-        // conservative default, matching the convention used by tools like Node's supports-color.
+        // No TERM/COLORTERM/WT_SESSION at all is ambiguous, not a signal either way. On Unix that's
+        // treated the same as TERM=dumb — conservative, matching tools like Node's supports-color.
+        // On Windows, TERM simply isn't part of the platform's convention (cmd.exe and PowerShell
+        // never set it, with or without Windows Terminal), so the same absence there says nothing
+        // about capability — assume basic 16-color support rather than degrading every native
+        // Windows console to no color.
         var caps = Detect(new Dictionary<string, string>());
 
-        Assert.Equal(ColorSupport.NoColor, caps.ColorSupport);
+        var expected = OperatingSystem.IsWindows() ? ColorSupport.Named16 : ColorSupport.NoColor;
+        Assert.Equal(expected, caps.ColorSupport);
     }
 
     [Fact]
@@ -83,14 +88,23 @@ public class TerminalCapabilitiesTests
         Assert.Equal(ColorSupport.Named16, caps.ColorSupport);
     }
 
-    [Theory]
-    [InlineData("dumb")]
-    [InlineData("")]
-    public void DumbOrEmptyTerm_ReportsNoColor(string termValue)
+    [Fact]
+    public void ExplicitDumbTerm_ReportsNoColor_OnAnyPlatform()
     {
-        var caps = Detect(new Dictionary<string, string> { ["TERM"] = termValue });
+        // Unlike an absent TERM, "dumb" is an explicit signal (e.g. set by Emacs' shell-mode) —
+        // it must win regardless of platform, so it gets its own test from the empty-TERM case below.
+        var caps = Detect(new Dictionary<string, string> { ["TERM"] = "dumb" });
 
         Assert.Equal(ColorSupport.NoColor, caps.ColorSupport);
+    }
+
+    [Fact]
+    public void EmptyTerm_FallsBackToPlatformDefault()
+    {
+        var caps = Detect(new Dictionary<string, string> { ["TERM"] = "" });
+
+        var expected = OperatingSystem.IsWindows() ? ColorSupport.Named16 : ColorSupport.NoColor;
+        Assert.Equal(expected, caps.ColorSupport);
     }
 
     [Fact]
