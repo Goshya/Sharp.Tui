@@ -7,3 +7,6 @@ obj/
 .idea/
 *.DotSettings.user
 artifacts/
+
+## BenchmarkDotNet run output (regenerated on every `dotnet run` of a benchmark project)
+BenchmarkDotNet.Artifacts/
