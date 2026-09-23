@@ -14,6 +14,35 @@ using Sharp.Tui.Core.Terminal;
 // Pass --watch-resize to instead print ResizeEvents for 10 seconds — the SIGWINCH path (Linux/
 // macOS/FreeBSD) can't be unit tested at all (it needs a real signal delivered to a real pty),
 // so this is the only way to verify it actually fires and reports the right size.
+//
+// Pass --read-keys to instead enter raw mode and echo back each real keypress read through
+// InputReader — the one thing none of the other modes prove: that raw mode's console/termios
+// setup (M1.4) actually delivers bytes to InputParser (M1.5) the way it expects, end to end in
+// a real terminal, not just each piece tested in isolation. This is M1's own "Done when":
+// enter raw mode, draw, read a keypress, exit cleanly.
+
+if (args.Contains("--read-keys"))
+{
+    var keyCapabilities = TerminalCapabilities.Detect();
+    var keyWriter = new AnsiTerminalWriter(Console.OpenStandardOutput(), keyCapabilities.ColorSupport);
+    using var keyRawMode = RawMode.Enter(keyWriter);
+
+    var reader = new InputReader(Console.OpenStandardInput());
+    await foreach (var evt in reader.ReadAsync())
+    {
+        keyWriter.Clear();
+        keyWriter.MoveCursor(2, 1);
+        WriteText(keyWriter, "Press keys (letters, arrows, Ctrl+X, ...) — Esc to exit.");
+        keyWriter.MoveCursor(2, 3);
+        WriteText(keyWriter, DescribeEvent(evt));
+        keyWriter.Flush();
+
+        if (evt.Kind == InputEventKind.Key && evt.AsKey.Code == KeyCode.Escape)
+            break;
+    }
+
+    return;
+}
 
 if (args.Contains("--watch-resize"))
 {
@@ -88,3 +117,14 @@ static void WriteText(ITerminalWriter writer, string text)
     foreach (var rune in text.EnumerateRunes())
         writer.Write(rune);
 }
+
+static string DescribeEvent(InputEvent evt) => evt.Kind switch
+{
+    InputEventKind.Key => evt.AsKey.Code == KeyCode.Char
+        ? $"Key: '{evt.AsKey.Char}'  Modifiers={evt.AsKey.Modifiers}"
+        : $"Key: {evt.AsKey.Code}  Modifiers={evt.AsKey.Modifiers}",
+    InputEventKind.Mouse => $"Mouse: {evt.AsMouse}",
+    InputEventKind.Resize => $"Resize: {evt.AsResize}",
+    InputEventKind.Paste => $"Paste: \"{evt.AsPaste}\"",
+    _ => evt.ToString() ?? "",
+};
