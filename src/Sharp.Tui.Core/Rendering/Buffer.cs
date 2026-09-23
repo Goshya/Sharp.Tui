@@ -31,4 +31,14 @@ public sealed class Buffer
     }
 
     public void Clear() => Array.Fill(_cells, Cell.Blank);
+
+    // Bulk cell copy for DiffRenderer's "commit back into front" step — a single Array.Copy
+    // instead of a W*H loop through the bounds-checked indexer.
+    internal void CopyFrom(Buffer source)
+    {
+        if (source.Width != Width || source.Height != Height)
+            throw new ArgumentException("Source buffer dimensions must match.", nameof(source));
+
+        Array.Copy(source._cells, _cells, _cells.Length);
+    }
 }
