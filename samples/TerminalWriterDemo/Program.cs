@@ -1,4 +1,5 @@
 using System.Text;
+using Sharp.Tui.Core.Input;
 using Sharp.Tui.Core.Rendering;
 using Sharp.Tui.Core.Terminal;
 
@@ -9,6 +10,26 @@ using Sharp.Tui.Core.Terminal;
 // Pass --crash to deliberately throw while raw mode is active, to manually verify M1.4's "Done
 // when" requirement: the shell must be left in a normal, usable state even after an unhandled
 // exception, not just on a clean exit.
+//
+// Pass --watch-resize to instead print ResizeEvents for 10 seconds — the SIGWINCH path (Linux/
+// macOS/FreeBSD) can't be unit tested at all (it needs a real signal delivered to a real pty),
+// so this is the only way to verify it actually fires and reports the right size.
+
+if (args.Contains("--watch-resize"))
+{
+    Console.WriteLine($"Initial size: {Console.WindowWidth}x{Console.WindowHeight}");
+    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+    try
+    {
+        await foreach (var evt in new ResizeWatcher().WatchAsync(cts.Token))
+            Console.WriteLine($"Resize: {evt.AsResize}");
+    }
+    catch (OperationCanceledException)
+    {
+        Console.WriteLine("Done watching (10s elapsed).");
+    }
+    return;
+}
 
 var shouldCrash = args.Contains("--crash");
 
