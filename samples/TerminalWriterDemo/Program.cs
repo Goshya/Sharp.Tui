@@ -27,7 +27,7 @@ if (args.Contains("--read-keys"))
     var keyWriter = new AnsiTerminalWriter(Console.OpenStandardOutput(), keyCapabilities.ColorSupport);
     using var keyRawMode = RawMode.Enter(keyWriter);
 
-    var reader = new InputReader(Console.OpenStandardInput());
+    var reader = new InputReader(InputReader.OpenStandardInput());
     await foreach (var evt in reader.ReadAsync())
     {
         keyWriter.Clear();

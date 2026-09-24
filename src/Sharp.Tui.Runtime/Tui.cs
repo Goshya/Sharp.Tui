@@ -57,7 +57,7 @@ public static class Tui
                 writer,
                 Console.WindowWidth,
                 Console.WindowHeight,
-                [new InputReader(Console.OpenStandardInput()).ReadAsync(), new ResizeWatcher().WatchAsync()],
+                [new InputReader(InputReader.OpenStandardInput()).ReadAsync(), new ResizeWatcher().WatchAsync()],
                 keyMap,
                 resizeMap,
                 subscriptions);

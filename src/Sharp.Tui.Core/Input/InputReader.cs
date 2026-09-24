@@ -28,6 +28,16 @@ public sealed class InputReader
         _escTimeout = escTimeout ?? DefaultEscTimeout;
     }
 
+    // The stream to hand InputReader in production — not just Console.OpenStandardInput(): on Unix,
+    // when stdin is a terminal, .NET returns a line-oriented reader that echoes what it reads and
+    // hands data over only after Enter, which is fatal for a key-by-key TUI. Linux gets a
+    // poll()-based stream that also honours cancellation (see UnixStdinStream). Windows is fine
+    // with the Console stream: raw mode (IRawModeScope) already makes it deliver keys as typed.
+    public static Stream OpenStandardInput() =>
+        OperatingSystem.IsLinux()
+            ? new UnixStdinStream()
+            : Console.OpenStandardInput();
+
     public async IAsyncEnumerable<InputEvent> ReadAsync([EnumeratorCancellation] CancellationToken ct = default)
     {
         var buffer = new byte[256];
