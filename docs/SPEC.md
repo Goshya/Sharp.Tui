@@ -101,18 +101,23 @@ Runtime loop: an internal `Channel<TMsg>` merges keyboard/mouse/resize events, `
 // and worth having pixel-perfect in the README on day one.
 
 record Model(int Count);
-record Increment : IMsg;
-record Decrement : IMsg;
 
-class CounterApp : IApp<Model, IMsg>
+// The app's own message type — a plain record hierarchy, nothing library-defined.
+abstract record Msg;
+record Increment : Msg;
+record Decrement : Msg;
+record QuitRequested : Msg;
+
+class CounterApp : IApp<Model, Msg>
 {
-    public (Model, Cmd<IMsg>) Init() => (new Model(0), Cmd<IMsg>.None);
+    public (Model, Cmd<Msg>) Init() => (new Model(0), Cmd.None<Msg>());
 
-    public (Model, Cmd<IMsg>) Update(Model m, IMsg msg) => msg switch
+    public (Model, Cmd<Msg>) Update(Model m, Msg msg) => msg switch
     {
-        Increment => (m with { Count = m.Count + 1 }, Cmd<IMsg>.None),
-        Decrement => (m with { Count = m.Count - 1 }, Cmd<IMsg>.None),
-        _ => (m, Cmd<IMsg>.None)
+        Increment => (m with { Count = m.Count + 1 }, Cmd.None<Msg>()),
+        Decrement => (m with { Count = m.Count - 1 }, Cmd.None<Msg>()),
+        QuitRequested => (m, Cmd.Quit<Msg>()),   // quitting is an effect Update returns, like tea.Quit
+        _ => (m, Cmd.None<Msg>())
     };
 
     public Widget View(Model m) =>
@@ -126,11 +131,13 @@ class CounterApp : IApp<Model, IMsg>
         };
 }
 
-Program.Run(new CounterApp(), keyMap: key => key switch
+// Named `Tui`, not `Program`: a top-level-statements Main gets a compiler-generated `Program`
+// class that would shadow it (CS0117).
+Tui.Run(new CounterApp(), keyMap: key => key.Char.Value switch
 {
-    { Char: '+' } => new Increment(),
-    { Char: '-' } => new Decrement(),
-    { Char: 'q' } => Program.Quit,
+    '+' => new Increment(),
+    '-' => new Decrement(),
+    'q' => new QuitRequested(),
     _ => null
 });
 ```
@@ -197,7 +204,7 @@ docs/
 |---|---|---|---|
 | M0 | Repo scaffold | Solution + projects above, CI matrix (Windows/Linux/macOS build+test), LICENSE, CONTRIBUTING.md | 1–2 days |
 | M1 | Core renderer | Static screen draws correctly, raw-mode keypress read back, clean exit restores terminal | 1 week |
-| M2 | TEA runtime | `Program.Run`, `Cmd`/`Sub` plumbing, a tick subscription working end-to-end | 3–5 days |
+| M2 | TEA runtime | `Tui.Run`, `Cmd`/`Sub` plumbing, a tick subscription working end-to-end | 3–5 days |
 | M3 | Layout engine | `Row`/`Column`/`Stack`, `Fixed`/`Percent`/`Fill` sizing, unit-tested | 1 week |
 | M4 | Core widgets | `Text`, `Block`, `ListView`, `Table`, `Gauge` implemented + snapshot-tested | 1–1.5 weeks |
 | M5 | Showcase app | Polished demo app + README GIF + comparison table | 3–5 days |

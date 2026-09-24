@@ -9,7 +9,7 @@ using Buffer = Sharp.Tui.Core.Rendering.Buffer;
 namespace Sharp.Tui.Runtime;
 
 // The Elm loop itself, with every real-world dependency injected (writer, input sources, initial
-// size) so it can be driven by tests without a terminal. Program.Run is the thin wrapper that
+// size) so it can be driven by tests without a terminal. Tui.Run is the thin wrapper that
 // wires up the real Console I/O.
 //
 // Threading rule: all user code (Init/Update/View/keyMap/resizeMap) runs on the loop's own
