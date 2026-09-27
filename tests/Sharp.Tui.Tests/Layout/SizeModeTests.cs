@@ -58,4 +58,18 @@ public class SizeModeTests
     {
         Assert.NotEqual(SizeMode.Fixed(1), SizeMode.Fill(1));
     }
+
+    [Fact]
+    public void Auto_ReturnsTheSameCachedInstanceEveryTime()
+    {
+        Assert.Same(SizeMode.Auto(), SizeMode.Auto());
+    }
+
+    [Fact]
+    public void Auto_IsNeverEqualToAnyOtherKind()
+    {
+        Assert.NotEqual(SizeMode.Auto(), SizeMode.Fixed(0));
+        Assert.NotEqual(SizeMode.Auto(), SizeMode.Percent(0));
+        Assert.NotEqual(SizeMode.Auto(), SizeMode.Fill(0));
+    }
 }

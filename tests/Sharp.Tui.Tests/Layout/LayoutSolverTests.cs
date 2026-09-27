@@ -186,4 +186,69 @@ public class LayoutSolverTests
         var columnSizes = LayoutSolver.Solve(24, [SizeMode.Fixed(10), SizeMode.Fill(1)]);
         Assert.Equal([10, 14], columnSizes);
     }
+
+    // --- Auto ------------------------------------------------------------------------------------
+
+    [Fact]
+    public void Solve_TwoArgumentOverload_AutoEntry_ThrowsWhenActuallyMeasured()
+    {
+        // The 2-argument overload is for callers who never use Auto — if one slips through
+        // anyway, it must fail loudly, not silently NullReferenceException on a missing delegate.
+        Assert.Throws<InvalidOperationException>(() => LayoutSolver.Solve(10, [SizeMode.Auto()]));
+    }
+
+    [Fact]
+    public void Solve_ThreeArgumentOverload_NullMeasureAuto_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() => LayoutSolver.Solve(10, [], null!));
+    }
+
+    [Fact]
+    public void Solve_Auto_UsesMeasureAutoResult()
+    {
+        var sizes = LayoutSolver.Solve(10, [SizeMode.Auto()], _ => 4);
+
+        Assert.Equal([4], sizes);
+    }
+
+    [Fact]
+    public void Solve_Auto_OnlyCalledForAutoEntries()
+    {
+        var calledFor = new List<int>();
+        int MeasureAuto(int i)
+        {
+            calledFor.Add(i);
+            return 3;
+        }
+
+        LayoutSolver.Solve(10, [SizeMode.Fixed(1), SizeMode.Auto(), SizeMode.Fill(1)], MeasureAuto);
+
+        Assert.Equal([1], calledFor);
+    }
+
+    [Fact]
+    public void Solve_AutoMixedWithFixedAndFill_FillGetsWhatIsLeft()
+    {
+        var sizes = LayoutSolver.Solve(30, [SizeMode.Fixed(5), SizeMode.Auto(), SizeMode.Fill(1)], _ => 10);
+
+        Assert.Equal([5, 10, 15], sizes);
+    }
+
+    [Fact]
+    public void Solve_AutoExceedingAvailable_IsClampedNotOverflowing()
+    {
+        var sizes = LayoutSolver.Solve(10, [SizeMode.Auto(), SizeMode.Fill(1)], _ => 999);
+
+        Assert.Equal([10, 0], sizes);
+        Assert.Equal(10, sizes.Sum());
+    }
+
+    [Fact]
+    public void Solve_FixedThenAuto_FirstComeFirstServedOutOfSharedBudget()
+    {
+        // Fixed(8) leaves only 2 for the measured Auto entry, even though it "wants" 5.
+        var sizes = LayoutSolver.Solve(10, [SizeMode.Fixed(8), SizeMode.Auto()], _ => 5);
+
+        Assert.Equal([8, 2], sizes);
+    }
 }

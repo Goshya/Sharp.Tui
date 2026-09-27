@@ -186,6 +186,47 @@ public class RowColumnTests
         column.Render(DummyBuffer, new Rect(0, 0, 10, 10));
     }
 
+    // --- Auto --------------------------------------------------------------------------------
+    // An Auto child's Rect is dictated by its own Measure result, not by anything the container
+    // decides — Row/Column don't even look at the child's content, just at what Measure reports.
+
+    [Fact]
+    public void Row_AutoChild_WidthMatchesItsOwnMeasureResult()
+    {
+        var header = new FixedMeasureWidget(new Size(7, 1));
+        var body = new RecordingWidget();
+        var row = new Row([Row.Auto(header), Row.Fill(1, body)]);
+
+        row.Render(DummyBuffer, new Rect(0, 0, 30, 5));
+
+        Assert.Equal(new Rect(7, 0, 23, 5), body.LastRect);
+    }
+
+    [Fact]
+    public void Row_AutoChild_ExceedingAvailable_IsClampedNotOverflowing()
+    {
+        var oversized = new FixedMeasureWidget(new Size(999, 1));
+        var sibling = new RecordingWidget();
+        var row = new Row([Row.Auto(oversized), Row.Fill(1, sibling)]);
+
+        row.Render(DummyBuffer, new Rect(0, 0, 10, 5));
+
+        Assert.Equal(new Rect(0, 0, 10, 5), oversized.LastRect);
+        Assert.Equal(new Rect(10, 0, 0, 5), sibling.LastRect);
+    }
+
+    [Fact]
+    public void Column_AutoChild_HeightMatchesItsOwnMeasureResult()
+    {
+        var header = new FixedMeasureWidget(new Size(1, 3));
+        var body = new RecordingWidget();
+        var column = new Column([Column.Auto(header), Column.Fill(1, body)]);
+
+        column.Render(DummyBuffer, new Rect(0, 0, 5, 20));
+
+        Assert.Equal(new Rect(0, 3, 5, 17), body.LastRect);
+    }
+
     // --- Constructor -----------------------------------------------------------------------------
 
     [Fact]
@@ -201,9 +242,11 @@ public class RowColumnTests
         Assert.Throws<ArgumentNullException>(() => Row.Fixed(1, null!));
         Assert.Throws<ArgumentNullException>(() => Row.Percent(1, null!));
         Assert.Throws<ArgumentNullException>(() => Row.Fill(1, null!));
+        Assert.Throws<ArgumentNullException>(() => Row.Auto(null!));
         Assert.Throws<ArgumentNullException>(() => Column.Fixed(1, null!));
         Assert.Throws<ArgumentNullException>(() => Column.Percent(1, null!));
         Assert.Throws<ArgumentNullException>(() => Column.Fill(1, null!));
+        Assert.Throws<ArgumentNullException>(() => Column.Auto(null!));
     }
 
     // --- Measure -----------------------------------------------------------------------------
