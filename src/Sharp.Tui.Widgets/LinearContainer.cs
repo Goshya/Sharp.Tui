@@ -26,13 +26,24 @@ public abstract record LinearContainer : Widget
     // spanning `area`'s full size on the cross axis.
     protected abstract Rect Slice(Rect area, int start, int length);
 
+    // Projects a measured Size onto this container's own axis — the other half of Extent, needed
+    // to turn an Auto child's Measure result into a single number the solver can use.
+    protected abstract int ExtentOf(Size size);
+
     public override void Render(Buffer buffer, Rect area)
     {
         var modes = new SizeMode[Children.Count];
         for (var i = 0; i < Children.Count; i++)
             modes[i] = Children[i].Mode;
 
-        var sizes = LayoutSolver.Solve(Extent(area), modes);
+        // Asked with the container's own full area, loosely — an Auto child's Measure result is
+        // its own intrinsic size, independent of what any Fixed/Auto sibling already claimed;
+        // Solve's own remaining-budget clamp (same one Fixed already goes through) reins it in
+        // if it doesn't actually fit.
+        var measureConstraints = Constraints.Loose(new Size(area.Width, area.Height));
+        int MeasureAuto(int i) => ExtentOf(Children[i].Child.Measure(measureConstraints));
+
+        var sizes = LayoutSolver.Solve(Extent(area), modes, MeasureAuto);
 
         var offset = 0;
         for (var i = 0; i < Children.Count; i++)

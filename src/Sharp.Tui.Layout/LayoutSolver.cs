@@ -7,14 +7,24 @@ namespace Sharp.Tui.Layout;
 // calls it once per axis, once for its row tracks and once for its column tracks.
 public static class LayoutSolver
 {
-    // Fixed sizes are taken first, in list order, then Percent — of `available` itself, not of
-    // whatever Fixed left over — also in list order. Both draw from the same budget and are
-    // first-come-first-served: once it hits zero, every later entry (Fixed, Percent, or Fill)
-    // gets 0 rather than a negative size. Whatever the budget has left over after that is split
-    // across the Fill entries proportionally by weight.
-    public static int[] Solve(int available, IReadOnlyList<SizeMode> modes)
+    // Kept for callers that never use SizeMode.Auto, so they don't have to supply a callback
+    // they'd never invoke. If an Auto entry does slip through anyway, that's a caller bug: fail
+    // loudly here rather than let the 3-argument overload hit a null delegate.
+    public static int[] Solve(int available, IReadOnlyList<SizeMode> modes) =>
+        Solve(available, modes, static _ => throw new InvalidOperationException(
+            "This SizeMode list contains an Auto entry, but no measureAuto callback was supplied. " +
+            "Use the Solve overload that takes one."));
+
+    // Fixed and Auto are taken first, together, in list order — both want an exact number of
+    // cells, one literal, one measured via `measureAuto`. Percent comes next — of `available`
+    // itself, not of whatever Fixed/Auto left over — also in list order. All three draw from the
+    // same budget and are first-come-first-served: once it hits zero, every later entry (of any
+    // kind) gets 0 rather than a negative size. Whatever the budget has left over after that is
+    // split across the Fill entries proportionally by weight.
+    public static int[] Solve(int available, IReadOnlyList<SizeMode> modes, Func<int, int> measureAuto)
     {
         ArgumentNullException.ThrowIfNull(modes);
+        ArgumentNullException.ThrowIfNull(measureAuto);
         ArgumentOutOfRangeException.ThrowIfNegative(available);
 
         var sizes = new int[modes.Count];
@@ -22,10 +32,15 @@ public static class LayoutSolver
 
         for (var i = 0; i < modes.Count; i++)
         {
-            if (modes[i] is not FixedSizeMode fixedMode)
+            int cells;
+            if (modes[i] is FixedSizeMode fixedMode)
+                cells = fixedMode.Cells;
+            else if (modes[i] is AutoSizeMode)
+                cells = measureAuto(i);
+            else
                 continue;
 
-            var size = Math.Min(fixedMode.Cells, remaining);
+            var size = Math.Clamp(cells, 0, remaining);
             sizes[i] = size;
             remaining -= size;
         }

@@ -29,10 +29,18 @@ public sealed record Row : LinearContainer
         return (SizeMode.Fill(weight), child);
     }
 
+    public static (SizeMode Mode, Widget Child) Auto(Widget child)
+    {
+        ArgumentNullException.ThrowIfNull(child);
+        return (SizeMode.Auto(), child);
+    }
+
     protected override int Extent(Rect area) => area.Width;
 
     protected override Rect Slice(Rect area, int start, int length) =>
         new(area.X + start, area.Y, length, area.Height);
+
+    protected override int ExtentOf(Size size) => size.Width;
 
     // A Row's own natural size ignores every child's SizeMode (Fixed/Percent/Fill only matter to
     // Render's Solve pass) — it just asks each child how big it wants to be, sums those widths

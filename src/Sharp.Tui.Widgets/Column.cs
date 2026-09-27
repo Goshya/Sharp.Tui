@@ -29,10 +29,18 @@ public sealed record Column : LinearContainer
         return (SizeMode.Fill(weight), child);
     }
 
+    public static (SizeMode Mode, Widget Child) Auto(Widget child)
+    {
+        ArgumentNullException.ThrowIfNull(child);
+        return (SizeMode.Auto(), child);
+    }
+
     protected override int Extent(Rect area) => area.Height;
 
     protected override Rect Slice(Rect area, int start, int length) =>
         new(area.X, area.Y + start, area.Width, length);
+
+    protected override int ExtentOf(Size size) => size.Height;
 
     // See Row.Measure — identical reasoning, just the other axis: sums children's heights (its
     // own axis), takes the widest child's width (the cross axis).
