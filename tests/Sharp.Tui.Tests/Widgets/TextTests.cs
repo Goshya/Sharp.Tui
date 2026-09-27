@@ -101,4 +101,78 @@ public class TextTests
         Assert.Equal("a   ", Row(buffer, 0));
         Assert.Equal("b   ", Row(buffer, 1));
     }
+
+    // --- Measure ---------------------------------------------------------------------------------
+    // Whatever Render actually draws is the ground truth: Measure must agree with it, not with a
+    // simpler-but-wrong approximation (UTF-16 char count instead of Rune count, a naive
+    // string.Split('\n') that doesn't special-case '\r', ...).
+
+    private static readonly Constraints Loose = Constraints.Loose(new Size(1000, 1000));
+
+    [Fact]
+    public void Measure_SingleLine_WidthIsRuneCountHeightIsOne()
+    {
+        Assert.Equal(new Size(5, 1), new Text("hello").Measure(Loose));
+    }
+
+    [Fact]
+    public void Measure_MultipleLines_WidthIsLongestLineHeightIsLineCount()
+    {
+        Assert.Equal(new Size(3, 3), new Text("ab\ncde\nf").Measure(Loose));
+    }
+
+    [Fact]
+    public void Measure_EmptyContent_IsOneEmptyLine()
+    {
+        // An empty string is still one (blank) line, the same way a blank line in an editor
+        // still occupies a row — not zero lines.
+        Assert.Equal(new Size(0, 1), new Text("").Measure(Loose));
+    }
+
+    [Fact]
+    public void Measure_NullContent_IsTreatedLikeEmptyContent()
+    {
+        // Render treats null the same as "" (Content ?? string.Empty) — Measure must agree.
+        Assert.Equal(new Text("").Measure(Loose), new Text(null!).Measure(Loose));
+    }
+
+    [Fact]
+    public void Measure_TrailingNewline_CountsAnExtraEmptyLine()
+    {
+        // Mirrors Render: after the '\n', the cursor has moved to a new line even though nothing
+        // more was drawn on it — that line still logically exists and takes up height.
+        Assert.Equal(new Size(1, 2), new Text("a\n").Measure(Loose));
+    }
+
+    [Fact]
+    public void Measure_CarriageReturn_IsIgnoredNotCountedAsWidth()
+    {
+        // "a\r\nb": if '\r' weren't specifically skipped (e.g. a naive Split('\n') that leaves
+        // the '\r' attached to the first line), the first line would wrongly measure as width 2.
+        Assert.Equal(new Size(1, 2), new Text("a\r\nb").Measure(Loose));
+    }
+
+    [Fact]
+    public void Measure_SupplementaryPlaneRune_CountsAsOneCellWide()
+    {
+        // Matches Render_SupplementaryPlaneRune_TakesOneCell: counting Runes, not UTF-16 chars
+        // (the emoji is a surrogate pair — string.Length would wrongly report 4, not 3).
+        Assert.Equal(new Size(3, 1), new Text("a😀b").Measure(Loose));
+    }
+
+    [Fact]
+    public void Measure_ClampsDownToMaxWidthAndMaxHeight()
+    {
+        var constraints = new Constraints(0, 3, 0, 1);
+
+        Assert.Equal(new Size(3, 1), new Text("hello\nworld").Measure(constraints));
+    }
+
+    [Fact]
+    public void Measure_ClampsUpToMinWidthAndMinHeight()
+    {
+        var constraints = new Constraints(10, 20, 5, 5);
+
+        Assert.Equal(new Size(10, 5), new Text("hi").Measure(constraints));
+    }
 }

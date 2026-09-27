@@ -64,4 +64,37 @@ public class StackTests
     {
         Assert.Throws<ArgumentNullException>(() => new Stack(null!));
     }
+
+    // --- Measure -----------------------------------------------------------------------------
+    // A Stack wants to be exactly as big as its most demanding child, on each axis independently
+    // — unlike Row/Column, there's no axis to sum along, every child overlaps every other.
+
+    private static readonly Constraints Loose = Constraints.Loose(new Size(100, 100));
+
+    [Fact]
+    public void Measure_TakesMaxOfEachAxisAcrossChildren()
+    {
+        var a = new FixedMeasureWidget(new Size(10, 2));
+        var b = new FixedMeasureWidget(new Size(3, 8));
+        var stack = new Stack([a, b]);
+
+        Assert.Equal(new Size(10, 8), stack.Measure(Loose));
+    }
+
+    [Fact]
+    public void Measure_NoChildren_IsZero()
+    {
+        var stack = new Stack([]);
+
+        Assert.Equal(new Size(0, 0), stack.Measure(Loose));
+    }
+
+    [Fact]
+    public void Measure_ClampsToConstraints()
+    {
+        var a = new FixedMeasureWidget(new Size(50, 50));
+        var stack = new Stack([a]);
+
+        Assert.Equal(new Size(10, 10), stack.Measure(new Constraints(0, 10, 0, 10)));
+    }
 }

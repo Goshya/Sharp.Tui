@@ -13,4 +13,5 @@ internal sealed record RecordingWidget : Widget
     public Rect? LastRect { get; private set; }
 
     public override void Render(Buffer buffer, Rect area) => LastRect = area;
+    public override Size Measure(Constraints constraints) => new(constraints.MaxWidth, constraints.MaxHeight);
 }

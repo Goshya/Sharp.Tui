@@ -29,6 +29,9 @@ public class RuntimeLoopTests
             for (var i = 0; i < Text.Length && i < area.Width; i++)
                 buffer[area.X + i, area.Y] = new Cell(new Rune(Text[i]), Color.Default, Color.Default, StyleFlags.None);
         }
+
+        // Not exercised by any RuntimeLoop test — only present to satisfy the abstract member.
+        public override Size Measure(Constraints constraints) => new(Text.Length, 1);
     }
 
     private sealed class LambdaApp(

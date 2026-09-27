@@ -205,4 +205,65 @@ public class RowColumnTests
         Assert.Throws<ArgumentNullException>(() => Column.Percent(1, null!));
         Assert.Throws<ArgumentNullException>(() => Column.Fill(1, null!));
     }
+
+    // --- Measure -----------------------------------------------------------------------------
+    // A container's own Measure ignores each child's SizeMode entirely (Fixed/Percent/Fill only
+    // matter for Render's actual Solve pass) — it just asks every child its own natural size and
+    // combines them: summed along the container's own axis, maxed along the cross axis.
+
+    private static readonly Constraints Loose = Constraints.Loose(new Size(100, 100));
+
+    [Fact]
+    public void Row_Measure_SumsWidthsAndTakesMaxHeight()
+    {
+        var a = new FixedMeasureWidget(new Size(5, 2));
+        var b = new FixedMeasureWidget(new Size(3, 7));
+        var row = new Row([Row.Fixed(1, a), Row.Fill(1, b)]);
+
+        Assert.Equal(new Size(8, 7), row.Measure(Loose));
+    }
+
+    [Fact]
+    public void Row_Measure_NoChildren_IsZero()
+    {
+        var row = new Row([]);
+
+        Assert.Equal(new Size(0, 0), row.Measure(Loose));
+    }
+
+    [Fact]
+    public void Row_Measure_ClampsToConstraints()
+    {
+        var a = new FixedMeasureWidget(new Size(50, 50));
+        var row = new Row([Row.Fixed(1, a)]);
+
+        Assert.Equal(new Size(10, 10), row.Measure(new Constraints(0, 10, 0, 10)));
+    }
+
+    [Fact]
+    public void Column_Measure_SumsHeightsAndTakesMaxWidth()
+    {
+        var a = new FixedMeasureWidget(new Size(5, 2));
+        var b = new FixedMeasureWidget(new Size(9, 3));
+        var column = new Column([Column.Fixed(1, a), Column.Fill(1, b)]);
+
+        Assert.Equal(new Size(9, 5), column.Measure(Loose));
+    }
+
+    [Fact]
+    public void Column_Measure_NoChildren_IsZero()
+    {
+        var column = new Column([]);
+
+        Assert.Equal(new Size(0, 0), column.Measure(Loose));
+    }
+
+    [Fact]
+    public void Column_Measure_ClampsToConstraints()
+    {
+        var a = new FixedMeasureWidget(new Size(50, 50));
+        var column = new Column([Column.Fixed(1, a)]);
+
+        Assert.Equal(new Size(10, 10), column.Measure(new Constraints(0, 10, 0, 10)));
+    }
 }
