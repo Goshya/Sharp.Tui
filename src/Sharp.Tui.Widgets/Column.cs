@@ -33,4 +33,23 @@ public sealed record Column : LinearContainer
 
     protected override Rect Slice(Rect area, int start, int length) =>
         new(area.X, area.Y + start, area.Width, length);
+
+    // See Row.Measure — identical reasoning, just the other axis: sums children's heights (its
+    // own axis), takes the widest child's width (the cross axis).
+    public override Size Measure(Constraints constraints)
+    {
+        var width = 0;
+        var height = 0;
+
+        foreach (var (_, child) in Children)
+        {
+            var size = child.Measure(constraints);
+            width = Math.Max(width, size.Width);
+            height += size.Height;
+        }
+
+        return new Size(
+            Math.Clamp(width, constraints.MinWidth, constraints.MaxWidth),
+            Math.Clamp(height, constraints.MinHeight, constraints.MaxHeight));
+    }
 }

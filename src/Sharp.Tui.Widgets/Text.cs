@@ -41,4 +41,44 @@ public sealed record Text(string Content) : Widget
             x++;
         }
     }
+
+    public override Size Measure(Constraints constraints)
+    {
+        var (width, height) = MeasureLines(Content);
+
+        return new Size(
+            Math.Clamp(width, constraints.MinWidth, constraints.MaxWidth),
+            Math.Clamp(height, constraints.MinHeight, constraints.MaxHeight));
+    }
+
+    // Deliberately mirrors Render's own line-splitting rune by rune, not a simpler-looking
+    // Content.Split('\n') — that would count '\r' as part of the preceding line's length (wrong:
+    // Render skips it) and count UTF-16 chars instead of Runes (wrong for anything outside the
+    // BMP, e.g. an emoji, which Render draws as a single cell). Content is treated as one line
+    // even when empty or null, same as Render's `Content ?? string.Empty`.
+    private static (int Width, int Height) MeasureLines(string? content)
+    {
+        var width = 0;
+        var height = 1;
+        var lineWidth = 0;
+
+        foreach (var rune in (content ?? string.Empty).EnumerateRunes())
+        {
+            if (rune.Value == '\n')
+            {
+                width = Math.Max(width, lineWidth);
+                lineWidth = 0;
+                height++;
+                continue;
+            }
+
+            if (rune.Value == '\r')
+                continue;
+
+            lineWidth++;
+        }
+
+        width = Math.Max(width, lineWidth);
+        return (width, height);
+    }
 }

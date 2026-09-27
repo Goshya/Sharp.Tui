@@ -10,4 +10,5 @@ namespace Sharp.Tui.Widgets;
 public abstract record Widget
 {
     public abstract void Render(Buffer buffer, Rect area);
+    public abstract Size Measure(Constraints constraints);
 }

@@ -22,4 +22,23 @@ public sealed record Stack : Widget
             child.Render(buffer, area);
         
     }
+
+    // Unlike Row/Column there's no axis to sum along — every child overlaps every other — so a
+    // Stack wants to be exactly as big as its most demanding child, on each axis independently.
+    public override Size Measure(Constraints constraints)
+    {
+        var width = 0;
+        var height = 0;
+
+        foreach (var child in Children)
+        {
+            var size = child.Measure(constraints);
+            width = Math.Max(width, size.Width);
+            height = Math.Max(height, size.Height);
+        }
+
+        return new Size(
+            Math.Clamp(width, constraints.MinWidth, constraints.MaxWidth),
+            Math.Clamp(height, constraints.MinHeight, constraints.MaxHeight));
+    }
 }

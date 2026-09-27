@@ -33,4 +33,24 @@ public sealed record Row : LinearContainer
 
     protected override Rect Slice(Rect area, int start, int length) =>
         new(area.X + start, area.Y, length, area.Height);
+
+    // A Row's own natural size ignores every child's SizeMode (Fixed/Percent/Fill only matter to
+    // Render's Solve pass) — it just asks each child how big it wants to be, sums those widths
+    // (its own axis), and takes the tallest child's height (the cross axis).
+    public override Size Measure(Constraints constraints)
+    {
+        var width = 0;
+        var height = 0;
+
+        foreach (var (_, child) in Children)
+        {
+            var size = child.Measure(constraints);
+            width += size.Width;
+            height = Math.Max(height, size.Height);
+        }
+
+        return new Size(
+            Math.Clamp(width, constraints.MinWidth, constraints.MaxWidth),
+            Math.Clamp(height, constraints.MinHeight, constraints.MaxHeight));
+    }
 }
