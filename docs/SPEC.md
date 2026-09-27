@@ -64,12 +64,13 @@ Runtime loop: an internal `Channel<TMsg>` merges keyboard/mouse/resize events, `
 
 - Flexbox-inspired, two-pass (measure, then arrange), integer cell coordinates only — no sub-pixel/fractional layout needed, which keeps this far simpler than a real UI layout engine.
 - `Constraints { int MinWidth, MaxWidth, MinHeight, MaxHeight }`, `Rect { int X, Y, Width, Height }`.
-- Sizing modes on children: `Fixed(n)`, `Percent(p)`, `Fill(weight)` (CSS `flex-grow`-style).
-- Container primitives: `Row`, `Column`, `Stack` (z-order, for popups/modals/toasts), `Grid` (for table-like layouts).
+- Sizing modes on children: `Fixed(n)`, `Percent(p)` (of the container's own size on that axis, not of the remainder after `Fixed`), `Fill(weight)` (CSS `flex-grow`-style), `Auto` (sized to the child's own `Measure` result — added in M3, needed the moment any widget's height depends on its content, e.g. a status line or `Block`'s border).
+- Container primitives: `Row`, `Column`, `Stack` (z-order, for popups/modals/toasts), `Grid` (for table-like layouts). Layout package boundary: `Sharp.Tui.Layout` holds only the pure math — `Size`, `Constraints`, `SizeMode`, and the single-axis solver `Fixed` → `Percent` → `Fill` that both `Row`/`Column` and `Grid`'s two axes share. `Row`/`Column`/`Stack`/`Grid` themselves live in `Sharp.Tui.Widgets` as `Widget` subtypes, since a container's children are widgets and `Layout` must not depend on `Widget`.
+- A child's sizing mode is attached where it's placed in the container (e.g. `Row.Fixed(10, widget)` / `Row.Fill(1, widget)`), not on the widget itself — a widget stays a plain immutable record with no layout-specific properties.
 
 ### 2.5 Widget model
 
-- `IWidget { Size Measure(Constraints c); void Render(Buffer buf, Rect area); }`.
+- `Widget { Size Measure(Constraints c); void Render(Buffer buf, Rect area); }` (`Measure` added in M3, alongside the layout engine it exists for).
 - Widgets are **pure functions of their props** — records, not stateful classes. All mutable state (selected index, scroll offset, input cursor position) lives in the app's `Model`, exactly like React/Elm. This is the main API-level differentiator from `Terminal.Gui`'s stateful-view-with-events model, and it's what makes snapshot testing (§5) possible at all.
 - v1 widget set (deliberately small — ship 10 polished widgets, not 50 mediocre ones):
   1. `Text` / `Paragraph` (wrapping, alignment)
