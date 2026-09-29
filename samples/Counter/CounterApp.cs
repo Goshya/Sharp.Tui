@@ -16,6 +16,7 @@ internal sealed class CounterApp : IApp<Model, Msg>
         _ => (model, Cmd.None<Msg>()),
     };
 
-    public Widget View(Model model) =>
-        new Text($"Count: {model.Count}\n\n+ / -  change    q  quit");
+    public Widget View(Model model) => new Column([Column.Auto(new Text($"Count: {model.Count}")),
+                                                   Column.Fill(1, new Row([Row.Fill(1, new Text("+ / -  change")),
+                                                                           Row.Fill(1, new Text("q  quit")),])),]);
 }
