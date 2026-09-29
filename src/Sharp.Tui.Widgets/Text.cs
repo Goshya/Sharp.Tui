@@ -2,17 +2,25 @@ using System.Text;
 using Sharp.Tui.Core.Rendering;
 using Sharp.Tui.Layout;
 using Buffer = Sharp.Tui.Core.Rendering.Buffer;
+// The Style property below shadows the Style type name inside this record's own body (a member
+// always wins over a type of the same simple name in scope) — this alias is the only way to
+// still reach Style.Default from in here without a fully-qualified name at every call site.
+using CoreStyle = Sharp.Tui.Core.Rendering.Style;
 
 namespace Sharp.Tui.Widgets;
 
-// Minimal on purpose: plain unstyled text, one buffer cell per Rune, '\n' starts a new line.
-// Whatever doesn't fit in the area is clipped (no wrapping). Styles, alignment, wrapping and
-// wide-character handling are M4's job.
-public sealed record Text(string Content) : Widget
+// Minimal on purpose: plain text, one buffer cell per Rune, '\n' starts a new line. Whatever
+// doesn't fit in the area is clipped (no wrapping). Alignment, wrapping and wide-character
+// handling are still M4's job — only Style (docs/SPEC.md §2.6) has landed so far.
+public sealed record Text(string Content, Style? Style = null) : Widget
 {
     public override void Render(Buffer buffer, Rect area)
     {
         ArgumentNullException.ThrowIfNull(buffer);
+
+        // Resolved once, not per character — a Style never changes mid-render, so there's
+        // nothing to gain from redoing this on every Rune.
+        var (foreground, background, flags) = (Style ?? CoreStyle.Default).Resolve();
 
         // Clip to the buffer as well, so an oversized area can't make the indexer throw.
         var right = Math.Min(area.X + area.Width, buffer.Width);
@@ -36,7 +44,7 @@ public sealed record Text(string Content) : Widget
                 return;
 
             if (x >= area.X && x < right && y >= area.Y)
-                buffer[x, y] = new Cell(rune, Color.Default, Color.Default, StyleFlags.None);
+                buffer[x, y] = new Cell(rune, foreground, background, flags);
 
             x++;
         }

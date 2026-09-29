@@ -175,4 +175,36 @@ public class TextTests
 
         Assert.Equal(new Size(10, 5), new Text("hi").Measure(constraints));
     }
+
+    // --- Style ---------------------------------------------------------------------------------
+
+    [Fact]
+    public void Render_NoStyle_MatchesWhatWasHardcodedBeforeStyleExisted()
+    {
+        var buffer = new Buffer(1, 1);
+
+        new Text("x").Render(buffer, new Rect(0, 0, 1, 1));
+
+        var cell = buffer[0, 0];
+        Assert.Equal(Sharp.Tui.Core.Rendering.Color.Default, cell.Foreground);
+        Assert.Equal(Sharp.Tui.Core.Rendering.Color.Default, cell.Background);
+        Assert.Equal(Sharp.Tui.Core.Rendering.StyleFlags.None, cell.Style);
+    }
+
+    [Fact]
+    public void Render_WithStyle_ResolvedStyleReachesEveryCell()
+    {
+        var buffer = new Buffer(2, 1);
+        var style = new Sharp.Tui.Core.Rendering.Style(
+            Foreground: Sharp.Tui.Core.Rendering.Color.Named(1),
+            Bold: true);
+
+        new Text("ab", style).Render(buffer, new Rect(0, 0, 2, 1));
+
+        foreach (var cell in new[] { buffer[0, 0], buffer[1, 0] })
+        {
+            Assert.Equal(Sharp.Tui.Core.Rendering.Color.Named(1), cell.Foreground);
+            Assert.Equal(Sharp.Tui.Core.Rendering.StyleFlags.Bold, cell.Style);
+        }
+    }
 }
