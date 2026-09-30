@@ -303,6 +303,28 @@ public class InputParserTests
         Assert.Equal(KeyEvent.FromCode(expected), evt.AsKey);
     }
 
+    // --- SS3 arrow keys (DECCKM / "application cursor keys" mode) ------------
+    // Some shells (bash's own readline) put the terminal into this mode on startup and never
+    // turn it back off, so a real interactive session can send these instead of the usual CSI
+    // arrow sequences even though we never asked for DECCKM ourselves — both forms must resolve
+    // to the same KeyCode.
+
+    [Theory]
+    [InlineData('A', KeyCode.Up)]
+    [InlineData('B', KeyCode.Down)]
+    [InlineData('C', KeyCode.Right)]
+    [InlineData('D', KeyCode.Left)]
+    public void Ss3_ArrowKeys_ParseTheSameAsCsiArrowKeys(char final, KeyCode expected)
+    {
+        byte[] bytes = [0x1B, (byte)'O', (byte)final];
+
+        var result = Parse(bytes, out var evt, out var consumed);
+
+        Assert.Equal(ParseResult.Complete, result);
+        Assert.Equal(3, consumed);
+        Assert.Equal(KeyEvent.FromCode(expected), evt.AsKey);
+    }
+
     // --- SGR mouse -----------------------------------------------------------
 
     [Fact]

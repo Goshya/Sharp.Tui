@@ -173,6 +173,10 @@ internal static class InputParser
             (byte)'Q' => KeyCode.F2,
             (byte)'R' => KeyCode.F3,
             (byte)'S' => KeyCode.F4,
+            (byte)'A' => KeyCode.Up,
+            (byte)'B' => KeyCode.Down,
+            (byte)'C' => KeyCode.Right,
+            (byte)'D' => KeyCode.Left,
             _ => null,
         };
 
