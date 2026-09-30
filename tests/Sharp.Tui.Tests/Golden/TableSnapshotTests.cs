@@ -51,4 +51,19 @@ public class TableSnapshotTests
 
         Snapshot.AssertMatchesGoldenFile(actual, "Table.EmptyRowsHeaderOnly.golden.txt");
     }
+
+    [Fact]
+    public void Table_MoreRowsThanFitHeight_RowsPastTheBottomAreClipped()
+    {
+        // 1 header row + 5 data rows = 6 rows tall, into an area only 3 rows tall — the Fixed(1)
+        // row tracks are first-come-first-served out of the same budget LayoutSolver already
+        // clips Fixed entries with (same mechanism Grid/ListView clipping already relies on).
+        var table = new Table(
+            ["N"],
+            [["1"], ["2"], ["3"], ["4"], ["5"]]);
+
+        var actual = Snapshot.RenderToGrid(table, width: 3, height: 3);
+
+        Snapshot.AssertMatchesGoldenFile(actual, "Table.MoreRowsThanFitHeight.golden.txt");
+    }
 }
