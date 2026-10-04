@@ -22,8 +22,9 @@ lists in particular can change between major versions.
 
 **"AOT-clean" isn't a checkbox here — it's how the library is built from day one.** Zero
 reflection, zero `Activator.CreateInstance`, zero dynamic code generation anywhere in
-`Sharp.Tui.Core`/`Layout`/`Widgets`/`Runtime`. `dotnet publish -p:PublishAot=true` against an app
-built on Sharp.Tui produces a single native binary with nothing to trim away.
+`Sharp.Tui.Core`/`Layout`/`Widgets`/`Runtime`. The library is built to be NativeAOT-compatible;
+end-to-end `PublishAot` verification, with measured binary sizes, is still in progress
+(see [#30](https://github.com/Goshya/Sharp.Tui/issues/30)).
 
 ## Getting started
 
@@ -85,6 +86,18 @@ for now, not forgotten:
   universal legacy terminal support
 - Accessibility/screen-reader support (a known gap, not something faked)
 - Advanced mouse gestures beyond click/scroll
+
+## Platform support
+
+| Platform | Status |
+|---|---|
+| Windows | Supported |
+| Linux | Supported |
+| macOS | **Not supported yet** — raw terminal mode isn't implemented there (see [#31](https://github.com/Goshya/Sharp.Tui/issues/31)) |
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Status
 
