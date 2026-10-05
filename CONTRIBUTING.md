@@ -36,6 +36,13 @@ routinely don't show up in unit tests alone.
 - Style: file-scoped namespaces, one public type per file, PascalCase public members,
   `_camelCase` private fields, nullable reference types enabled.
 
+## Packaging
+
+The single `Sharp.Tui` NuGet package is built by `src/Sharp.Tui` (a project with no code that bundles the
+four library assemblies). After changing project files or package metadata, run
+`bash eng/verify-package.sh`: it packs, inspects the package, and builds and NativeAOT-publishes a scratch
+app that uses only the packaged library.
+
 ## Performance
 
 Diffing and flushing a 200×50 buffer should stay well under 2 ms. If a change to `Core` or `Layout`

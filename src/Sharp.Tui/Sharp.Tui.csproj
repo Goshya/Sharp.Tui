@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Packaging project: contains no code. It exists to produce the single `Sharp.Tui` NuGet package
+       (docs/SPEC.md §8) holding the four library assemblies side by side in lib/net10.0/. -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>true</IsPackable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+
+    <!-- This project's own (empty) assembly stays out of the package; the four real ones are added
+         by the target below. -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <!-- The package must have zero dependencies. -->
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <!-- No code of its own, so no public API to document or analyse. -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- PrivateAssets=all: bundle the assemblies, don't list them as dependencies. -->
+    <ProjectReference Include="..\Sharp.Tui.Core\Sharp.Tui.Core.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Sharp.Tui.Layout\Sharp.Tui.Layout.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Sharp.Tui.Widgets\Sharp.Tui.Widgets.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Sharp.Tui.Runtime\Sharp.Tui.Runtime.csproj" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <Target Name="CopyProjectReferencesToPackage" BeforeTargets="_GetPackageFiles" DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+      <_BundledAssembly Include="@(ReferenceCopyLocalPaths)"
+                        Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference'" />
+      <None Include="@(_BundledAssembly)" Pack="true" PackagePath="lib/$(TargetFramework)/" />
+    </ItemGroup>
+  </Target>
+
+</Project>

@@ -1,0 +1,14 @@
+<Project>
+
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!-- The four library assemblies are not packages of their own: src/Sharp.Tui bundles them into the
+       single `Sharp.Tui` package (docs/SPEC.md §8) and sets IsPackable back to true for itself. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <!-- Symbols travel inside each DLL: the packaged assemblies are copies of these projects' output,
+         and a separate .snupkg only carries the packaging project's own (empty) assembly's PDB. -->
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+</Project>

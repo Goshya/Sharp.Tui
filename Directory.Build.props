@@ -1,0 +1,35 @@
+<Project>
+
+  <!-- Version: bump VersionPrefix for a release. CI/local test packs can append a suffix without
+       editing this file: dotnet pack -p:VersionSuffix=local.1 -->
+  <PropertyGroup>
+    <VersionPrefix>0.1.0</VersionPrefix>
+  </PropertyGroup>
+
+  <!-- NuGet package metadata. Only the packaging project (src/Sharp.Tui) is packable. -->
+  <PropertyGroup>
+    <Authors>Goshya</Authors>
+    <Copyright>Copyright (c) 2026 Goshya</Copyright>
+    <Description>A small, dependency-free, NativeAOT-clean TUI framework for .NET built around The Elm Architecture (Model-Update-View).</Description>
+    <PackageTags>tui;terminal;console;cli;elm-architecture;mvu;nativeaot</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Goshya/Sharp.Tui</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/Goshya/Sharp.Tui</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <!-- SourceLink is built into the .NET SDK (since 8): these properties are all it needs, no package
+       reference, so the zero-dependency rule stays intact. -->
+  <PropertyGroup>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+  </PropertyGroup>
+
+  <!-- Deterministic builds are the SDK default; on CI also normalise source paths so a package built
+       there is byte-for-byte reproducible from the same commit. -->
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+</Project>

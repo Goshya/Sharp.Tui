@@ -65,3 +65,19 @@ jobs:
 
       - name: Publish GitLogViewer
         run: dotnet publish samples/GitLogViewer -c Release -r ${{ matrix.rid }} -p:PublishAot=true -warnaserror -o out/GitLogViewer
+
+  package:
+    name: NuGet package
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # Packs Sharp.Tui, checks the .nupkg (4 assemblies, zero dependencies, license, repo info), then builds
+      # and NativeAOT-publishes an app outside the repo that uses only the README snippet and this package.
+      - name: Verify package
+        run: bash eng/verify-package.sh

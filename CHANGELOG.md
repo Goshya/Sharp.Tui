@@ -16,6 +16,7 @@ breaking API changes — they are always listed here under **Changed** or **Remo
 - Widgets: `Text`, `Block`, `Gauge`, `ListView`, `Table`, plus `Theme`.
 - TEA runtime: `IApp<TModel, TMsg>`, `Cmd<TMsg>`, `Sub<TMsg>`, `Tui.Run`.
 - Samples: `Counter`, `Stopwatch`, `ItemBrowser`, `GitLogViewer`.
+- NuGet packaging: a single `Sharp.Tui` package bundling the four assemblies, with no dependencies, SourceLink and embedded symbols (`eng/verify-package.sh` checks it end to end).
 
 ### Known limitations
 
