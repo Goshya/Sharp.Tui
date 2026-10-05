@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # macOS is deliberately absent: raw terminal mode isn't supported there yet (#31).
+        # macOS is deliberately absent: raw terminal mode isn't supported there yet (#35).
         os: [windows-latest, ubuntu-latest]
     steps:
       - uses: actions/checkout@v4

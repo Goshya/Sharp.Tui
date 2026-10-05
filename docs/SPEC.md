@@ -184,6 +184,7 @@ docs/
 
 - **Windows**: legacy `conhost` vs. Windows Terminal behave differently; require VT processing to be enabled (`ENABLE_VIRTUAL_TERMINAL_PROCESSING`) and document a minimum of Windows Terminal + PowerShell 7 as the supported baseline rather than chasing `cmd.exe` edge cases.
 - **Unix**: don't attempt full `terminfo` compatibility; target "correct on modern terminal emulators," matching the scope Ratatui and Bubble Tea both settled on.
+- **macOS**: not supported at `v0.1.0`. Raw mode needs Darwin's own `termios` struct layout and flag values (different from Linux's), which can't be verified without a Mac, so `RawMode.Enter` throws a `PlatformNotSupportedException` with a pointer to the tracking issue — before anything is written to the terminal — instead of shipping unverified native interop. macOS is therefore also not in the CI matrix yet. Tracked in [#35](https://github.com/Goshya/Sharp.Tui/issues/35).
 - Everything is stdin/stdout stream-based, so SSH sessions should work without special-casing.
 
 ## 8. Packaging & distribution

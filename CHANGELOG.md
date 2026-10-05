@@ -19,4 +19,4 @@ breaking API changes — they are always listed here under **Changed** or **Remo
 
 ### Known limitations
 
-- macOS is not supported yet: raw terminal mode is not implemented there.
+- macOS is not supported yet: raw terminal mode is not implemented there, and `RawMode.Enter` throws a `PlatformNotSupportedException` with a pointer to [#35](https://github.com/Goshya/Sharp.Tui/issues/35) before touching the terminal.

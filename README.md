@@ -105,7 +105,7 @@ for now, not forgotten:
 |---|---|
 | Windows | Supported |
 | Linux | Supported |
-| macOS | **Not supported yet** — raw terminal mode isn't implemented there (see [#31](https://github.com/Goshya/Sharp.Tui/issues/31)) |
+| macOS | **Not supported yet** — raw terminal mode isn't implemented there (see [#35](https://github.com/Goshya/Sharp.Tui/issues/35)) |
 
 ## Contributing
 
