@@ -1,5 +1,7 @@
 # Sharp.Tui
 
+[![CI](https://github.com/Goshya/Sharp.Tui/actions/workflows/ci.yml/badge.svg)](https://github.com/Goshya/Sharp.Tui/actions/workflows/ci.yml)
+
 A small, dependency-free TUI (terminal UI) framework for .NET, built around **The Elm
 Architecture**: an immutable `Model`, a pure `Update` function, a pure `View` function, and side
 effects modeled explicitly as `Cmd`/`Sub`. Not a reskin of an existing library — a genuinely
