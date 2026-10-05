@@ -80,13 +80,18 @@ public sealed class InputReader
             if (isPendingEsc)
             {
                 var remaining = decider.RemainingTime!.Value;
-                if (remaining > TimeSpan.Zero)
-                {
-                    var delayTask = Task.Delay(remaining, _timeProvider, ct);
-                    var winner = await Task.WhenAny(pendingRead, delayTask).ConfigureAwait(false);
-                    if (winner == delayTask)
-                        continue; // no bytes arrived in time — loop back and let HasTimedOut fire
-                }
+
+                // HasTimedOut above and RemainingTime here read the clock at two different
+                // instants, so the deadline can pass in between: <= Zero means "just timed out",
+                // not "nothing to wait for". Falling through to await the read would block until
+                // the next keypress and the lone Esc would never be delivered.
+                if (remaining <= TimeSpan.Zero)
+                    continue;
+
+                var delayTask = Task.Delay(remaining, _timeProvider, ct);
+                var winner = await Task.WhenAny(pendingRead, delayTask).ConfigureAwait(false);
+                if (winner == delayTask)
+                    continue; // no bytes arrived in time — loop back and let HasTimedOut fire
             }
 
             var bytesRead = await pendingRead.ConfigureAwait(false);

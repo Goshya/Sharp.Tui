@@ -108,6 +108,31 @@ public class InputReaderTests
         Assert.Equal(KeyEvent.FromCode(KeyCode.Escape), events[0].AsKey);
     }
 
+    // Every clock read jumps forward 6 ms, so with a 10 ms timeout the deadline passes *between*
+    // the reader's HasTimedOut check (6 ms elapsed — not yet) and its RemainingTime read
+    // (12 ms elapsed — already over). Regression test for a CI hang where that window made the
+    // reader await a read that would never complete instead of delivering the Esc.
+    private sealed class SteppingTimeProvider : TimeProvider
+    {
+        private long _now = -6;
+
+        public override long TimestampFrequency => 1000; // 1 tick == 1 ms
+        public override long GetTimestamp() => _now += 6;
+    }
+
+    [Fact]
+    public async Task ReadAsync_EscDeadlinePassesBetweenTimeoutCheckAndRemainingTimeRead_StillYieldsEscape()
+    {
+        var stream = new QueueStream();
+        stream.Feed([0x1B]);
+        var reader = new InputReader(stream, TimeSpan.FromMilliseconds(10), new SteppingTimeProvider());
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+        var events = await CollectAsync(reader, 1, cts.Token);
+
+        Assert.Equal(KeyEvent.FromCode(KeyCode.Escape), events[0].AsKey);
+    }
+
     [Fact]
     public async Task ReadAsync_EscFollowedByBracketBeforeTimeout_ParsesAsSequenceNotLiteralEscape()
     {

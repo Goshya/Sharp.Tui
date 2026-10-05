@@ -20,6 +20,7 @@ jobs:
   build-test:
     name: build + test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -36,4 +37,5 @@ jobs:
         run: dotnet build Sharp.Tui.sln -c Release -warnaserror
 
       - name: Test
-        run: dotnet test Sharp.Tui.sln -c Release --no-build --logger "console;verbosity=normal"
+        # --blame-hang names the test that never finished instead of the job just timing out.
+        run: dotnet test Sharp.Tui.sln -c Release --no-build --blame-hang --blame-hang-timeout 2m --logger "console;verbosity=normal"

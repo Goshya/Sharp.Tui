@@ -75,7 +75,9 @@ internal static class Snapshot
             return;
         }
 
-        var expected = File.ReadAllText(goldenPath);
+        // Git's autocrlf (the default on Windows checkouts, including CI runners) turns the
+        // committed LF golden files into CRLF on disk; the rendered grid always uses '\n'.
+        var expected = File.ReadAllText(goldenPath).Replace("\r\n", "\n");
         if (expected == actual)
         {
             DeleteIfExists(receivedPath); // stale leftover from a previous failing run

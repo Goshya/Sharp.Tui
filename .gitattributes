@@ -1,0 +1,2 @@
+# Golden files are compared byte-for-byte against a '\n'-joined grid; never let autocrlf touch them.
+*.golden.txt text eol=lf
