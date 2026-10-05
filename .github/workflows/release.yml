@@ -1,0 +1,145 @@
+name: Release
+
+# Publishing is triggered by pushing a tag like v0.1.0 (or v0.2.0-rc.1 for a pre-release).
+# Nothing is published unless build, tests and the package verification all pass first.
+#
+# Dry run: Actions -> Release -> "Run workflow" on any branch runs everything except the `publish`
+# job (nothing goes to nuget.org, no GitHub Release is created); the package is built as
+# <VersionPrefix>-dryrun.<run number> and left as a downloadable artifact.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build:
+    name: build, test, pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # The tag is the single trigger, so it must agree with the version in Directory.Build.props:
+      # tag v0.1.0 needs VersionPrefix 0.1.0; tag v0.1.0-rc.1 packs as 0.1.0-rc.1.
+      - name: Check tag against project version
+        id: version
+        shell: bash
+        run: |
+          prefix="$(dotnet msbuild src/Sharp.Tui/Sharp.Tui.csproj -getProperty:VersionPrefix | tr -d '[:space:]')"
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            tag="${GITHUB_REF_NAME#v}"
+          else
+            tag="$prefix-dryrun.$GITHUB_RUN_NUMBER" # manual run from a branch: rehearsal only
+          fi
+          core="${tag%%-*}"
+          suffix=""
+          [[ "$tag" == *-* ]] && suffix="${tag#*-}"
+          if [[ "$core" != "$prefix" ]]; then
+            echo "::error::Tag '$GITHUB_REF_NAME' does not match VersionPrefix '$prefix' in Directory.Build.props."
+            exit 1
+          fi
+          echo "version=$tag" >> "$GITHUB_OUTPUT"
+          echo "suffix=$suffix" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$([[ -n "$suffix" ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "Releasing $tag (VersionPrefix $prefix, suffix '${suffix}')"
+
+      - name: Build
+        run: dotnet build Sharp.Tui.sln -c Release -warnaserror
+
+      - name: Test
+        run: dotnet test Sharp.Tui.sln -c Release --no-build
+
+      - name: Verify package (inspect, install into a scratch app, NativeAOT publish)
+        run: bash eng/verify-package.sh
+
+      - name: Pack
+        run: dotnet pack src/Sharp.Tui -c Release -o out -p:VersionSuffix="${{ steps.version.outputs.suffix }}"
+
+      - name: Check the packed version
+        shell: bash
+        run: |
+          expected="Sharp.Tui.${{ steps.version.outputs.version }}.nupkg"
+          ls out
+          [[ -f "out/$expected" ]] || { echo "::error::Expected out/$expected"; exit 1; }
+
+      - name: Release notes from CHANGELOG
+        shell: bash
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          core="${version%%-*}"
+          # The section for this version, up to the next heading or the link definitions at the bottom.
+          # Plain substring match on the heading — no regex escaping to get wrong across awk flavours.
+          # Falls back to a generic note for pre-release tags without a section of their own.
+          awk -v h="## [$core]" 'index($0, h) == 1 {f=1; next} /^## /{if(f) exit} /^\[[^]]*\]: /{if(f) exit} f' CHANGELOG.md > release-notes.md
+          [[ -s release-notes.md ]] || echo "See [CHANGELOG.md](CHANGELOG.md)." > release-notes.md
+          cat release-notes.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: |
+            out/*.nupkg
+            release-notes.md
+          if-no-files-found: error
+
+  publish:
+    name: publish to nuget.org + GitHub Release
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The `nuget` environment can require a manual approval (Settings -> Environments -> nuget ->
+    # Required reviewers): publishing to nuget.org can't be undone, only unlisted.
+    environment: nuget
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Check the API key is configured
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo "::error::Secret NUGET_API_KEY is not set (Settings -> Secrets and variables -> Actions)."
+            exit 1
+          fi
+
+      # --skip-duplicate makes a re-run idempotent: if the push succeeded but a later step failed,
+      # re-running the job doesn't fail on "version already exists".
+      - name: Push to nuget.org
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push "out/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prerelease_flag=""
+          if [ "${{ needs.build.outputs.prerelease }}" = "true" ]; then prerelease_flag="--prerelease"; fi
+          gh release create "$GITHUB_REF_NAME" out/*.nupkg \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Sharp.Tui ${{ needs.build.outputs.version }}" \
+            --notes-file release-notes.md \
+            --verify-tag $prerelease_flag

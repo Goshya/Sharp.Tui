@@ -1,6 +1,7 @@
 # Sharp.Tui
 
 [![CI](https://github.com/Goshya/Sharp.Tui/actions/workflows/ci.yml/badge.svg)](https://github.com/Goshya/Sharp.Tui/actions/workflows/ci.yml)
+[![NuGet](https://img.shields.io/nuget/v/Sharp.Tui.svg)](https://www.nuget.org/packages/Sharp.Tui)
 
 A small, dependency-free TUI (terminal UI) framework for .NET, built around **The Elm
 Architecture**: an immutable `Model`, a pure `Update` function, a pure `View` function, and side
@@ -37,6 +38,15 @@ executable (no .NET runtime needed on the target machine):
 On Linux (WSL2), `Counter` draws its first frame ~4 ms after launch as a native binary versus
 ~46 ms for `dotnet Counter.dll` (median of 20 runs, measured under a pseudo-terminal). Sizes are
 for `Release` builds of the samples themselves, measured with .NET 10 and default AOT settings.
+
+## Install
+
+```bash
+dotnet add package Sharp.Tui
+```
+
+Targets `net10.0`; one package, no dependencies. Windows and Linux are supported (see
+[Platform support](#platform-support)).
 
 ## Getting started
 
