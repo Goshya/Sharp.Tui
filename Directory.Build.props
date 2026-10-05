@@ -26,10 +26,4 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
 
-  <!-- Deterministic builds are the SDK default; on CI also normalise source paths so a package built
-       there is byte-for-byte reproducible from the same commit. -->
-  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
-    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-  </PropertyGroup>
-
 </Project>

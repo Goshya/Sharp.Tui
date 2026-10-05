@@ -91,7 +91,10 @@ cat >"$APP/NuGet.config" <<EOF
 EOF
 RID="$(dotnet --info | awk '/RID:/{print $2; exit}')"
 dotnet publish "$(W "$APP")" -c Release -r "$RID" -p:PublishAot=true -warnaserror -o "$(W "$WORK/out")" 2>&1 | tail -3
-BIN="$(ls "$WORK"/out/App "$WORK"/out/App.exe 2>/dev/null | head -1)"
+BIN=""
+for candidate in "$WORK/out/App" "$WORK/out/App.exe"; do
+    if [ -f "$candidate" ]; then BIN="$candidate"; break; fi
+done
 [ -n "$BIN" ] || fail "no native binary produced"
 echo "   OK: native binary $(basename "$BIN"), $(( $(wc -c <"$BIN") / 1024 )) KB ($RID)"
 

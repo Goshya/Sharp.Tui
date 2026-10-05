@@ -11,4 +11,11 @@
     <DebugType>embedded</DebugType>
   </PropertyGroup>
 
+  <!-- Deterministic builds are the SDK default; on CI also normalise source paths so a package built
+       there is byte-for-byte reproducible from the same commit. Deliberately limited to src/: it
+       rewrites paths to "/_/...", which breaks tests that read files via [CallerFilePath] (golden files). -->
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
 </Project>
