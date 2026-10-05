@@ -10,6 +10,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- Enables the trim/AOT/single-file analyzers on every build; no reflection or dynamic codegen allowed. -->
+    <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
 
 </Project>

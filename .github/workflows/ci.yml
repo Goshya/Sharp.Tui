@@ -39,3 +39,29 @@ jobs:
       - name: Test
         # --blame-hang names the test that never finished instead of the job just timing out.
         run: dotnet test Sharp.Tui.sln -c Release --no-build --blame-hang --blame-hang-timeout 2m --logger "console;verbosity=normal"
+
+  native-aot:
+    name: NativeAOT publish (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # Guards the README's AOT claim: a warning from the trim/AOT analyzers or a link failure fails the job.
+      - name: Publish Counter
+        run: dotnet publish samples/Counter -c Release -r ${{ matrix.rid }} -p:PublishAot=true -warnaserror -o out/Counter
+
+      - name: Publish GitLogViewer
+        run: dotnet publish samples/GitLogViewer -c Release -r ${{ matrix.rid }} -p:PublishAot=true -warnaserror -o out/GitLogViewer

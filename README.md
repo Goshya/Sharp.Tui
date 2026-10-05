@@ -24,9 +24,19 @@ lists in particular can change between major versions.
 
 **"AOT-clean" isn't a checkbox here — it's how the library is built from day one.** Zero
 reflection, zero `Activator.CreateInstance`, zero dynamic code generation anywhere in
-`Sharp.Tui.Core`/`Layout`/`Widgets`/`Runtime`. The library is built to be NativeAOT-compatible;
-end-to-end `PublishAot` verification, with measured binary sizes, is still in progress
-(see [#30](https://github.com/Goshya/Sharp.Tui/issues/30)).
+`Sharp.Tui.Core`/`Layout`/`Widgets`/`Runtime`. The four library projects set
+`IsAotCompatible`, so the trim/AOT analyzers run on every build and CI keeps them at zero
+warnings. `dotnet publish -r <rid> -p:PublishAot=true` on the samples produces a single native
+executable (no .NET runtime needed on the target machine):
+
+| Sample | win-x64 | linux-x64 |
+|---|---|---|
+| `Counter` | 1.6 MB | 1.9 MB |
+| `GitLogViewer` (async `Cmd` spawning `git`) | 2.4 MB | 2.9 MB |
+
+On Linux (WSL2), `Counter` draws its first frame ~4 ms after launch as a native binary versus
+~46 ms for `dotnet Counter.dll` (median of 20 runs, measured under a pseudo-terminal). Sizes are
+for `Release` builds of the samples themselves, measured with .NET 10 and default AOT settings.
 
 ## Getting started
 
