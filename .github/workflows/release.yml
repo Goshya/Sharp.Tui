@@ -106,7 +106,8 @@ jobs:
     # Required reviewers): publishing to nuget.org can't be undone, only unlisted.
     environment: nuget
     permissions:
-      contents: write
+      contents: write # create the GitHub Release
+      id-token: write # lets NuGet/login request a GitHub OIDC token (Trusted Publishing, no stored API key)
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -116,20 +117,30 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Check the API key is configured
+      - name: Check the nuget.org user name is configured
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_USER: ${{ secrets.NUGET_USER }}
         run: |
-          if [ -z "$NUGET_API_KEY" ]; then
-            echo "::error::Secret NUGET_API_KEY is not set (Settings -> Secrets and variables -> Actions)."
+          if [ -z "$NUGET_USER" ]; then
+            echo "::error::Secret NUGET_USER (your nuget.org profile name, not your e-mail) is not set (Settings -> Secrets and variables -> Actions)."
             exit 1
           fi
+
+      # Trusted Publishing: exchanges this job's GitHub OIDC token for a temporary nuget.org API key,
+      # valid for 1 hour — so it's requested here, right before the push, and nothing long-lived is stored.
+      # Needs a policy on nuget.org (Trusted Publishing): owner Goshya, repository Sharp.Tui,
+      # workflow file release.yml, environment nuget.
+      - name: NuGet login (OIDC -> temporary API key)
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
 
       # --skip-duplicate makes a re-run idempotent: if the push succeeded but a later step failed,
       # re-running the job doesn't fail on "version already exists".
       - name: Push to nuget.org
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: dotnet nuget push "out/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: Create GitHub Release
